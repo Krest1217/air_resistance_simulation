@@ -17,7 +17,7 @@ SHAPES = {'구': 'sphere', '정육면체': 'cube', '유선형체': 'streamlined'
 class App:
     def __init__(self, root):
         self.root = root
-        root.title('공기저항 실험실 · Air Resistance Lab')
+        root.title('공기저항 시뮬레이션 - air resistance simulation')
         root.geometry('1180x820')
         root.minsize(940, 720)
         root.configure(bg=BG)
@@ -39,13 +39,12 @@ class App:
         self.mailbox = queue.Queue()
         header = ttk.Frame(root, padding=(24, 18))
         header.pack(fill='x')
-        ttk.Label(header, text='공기저항 실험실', style='Title.TLabel').pack(anchor='w')
-        ttk.Label(header, text='같은 출발, 다른 궤적  /  2차원 투사체와 역학적 에너지').pack(anchor='w', pady=(6, 0))
+        ttk.Label(header, text='공기저항 시뮬레이션', style='Title.TLabel').pack(anchor='w')
         body = ttk.Frame(root, padding=(24, 0, 24, 12))
         body.pack(fill='both', expand=True)
         left = ttk.Frame(body, width=240)
         left.pack(side='left', fill='y', padx=(0, 20))
-        ttk.Label(left, text='01  실험 조건', font=(self.font, 14, 'bold')).pack(anchor='w', pady=(0, 12))
+        ttk.Label(left, text='실험 조건', font=(self.font, 14, 'bold')).pack(anchor='w', pady=(0, 12))
         self.shape = tk.StringVar(value='구')
         ttk.Label(left, text='물체 형상').pack(anchor='w')
         box = ttk.Combobox(left, textvariable=self.shape, values=list(SHAPES), state='readonly', width=24)
@@ -83,7 +82,7 @@ class App:
         ttk.Scale(controls, from_=0, to=100, variable=self.progress, command=lambda v: self.draw()).pack(side='left', fill='x', expand=True, padx=10)
         self.clock = ttk.Label(controls, text='0.00 s', width=18)
         self.clock.pack(side='left')
-        ttk.Label(right, text='03  초기 역학적 에너지의 분배', font=(self.font, 13, 'bold')).pack(anchor='w', pady=(6, 4))
+        ttk.Label(right, text='초기 역학적 에너지의 분배', font=(self.font, 13, 'bold')).pack(anchor='w', pady=(6, 4))
         self.energy = tk.Canvas(right, background='white', highlightthickness=0, height=143)
         self.energy.pack(fill='x')
         self.energy.bind('<Configure>', lambda e: self.draw())
@@ -142,7 +141,7 @@ class App:
                 vt = vacuum_time(p)
                 self.vacuum_data = [vacuum(p, vt*i/200) for i in range(201)]
                 apex = max(q.y for q in data)
-                self.summary.configure(text=f'02  궤적 비교   |   비행시간 {end.t:.2f} s   ·   사거리 {end.x:.2f} m   ·   최고 높이 {apex:.2f} m\n공기저항 없음: 비행시간 {vt:.2f} s · 사거리 {self.vacuum_data[-1].x:.2f} m')
+                self.summary.configure(text=f'궤적 비교   |   비행시간 {end.t:.2f} s   ·   사거리 {end.x:.2f} m   ·   최고 높이 {apex:.2f} m\n공기저항 없음: 비행시간 {vt:.2f} s · 사거리 {self.vacuum_data[-1].x:.2f} m')
                 self.progress.set(100)
                 self.play_button.configure(state='normal')
                 self.export_button.configure(state='normal')
@@ -263,20 +262,58 @@ class App:
             messagebox.showerror('저장 실패', str(exc))
 
     def about(self):
-        messagebox.showinfo('모델과 가정',
-            '중력과 속도 반대 방향 항력만 고려합니다. 바람·양력·회전·부력은 제외합니다.\n\n'
-            'Fd = ½ρ A Cd v², Re = ρvL/μ\n'
-            '구: A=πr², L=2r. Re<1000에서 Cd=24/Re(1+0.15Re^0.687), 그 외 0.44.\n'
-            '정육면체: A=a², L=a, Cd=24/Re+1.05.\n'
-            '유선형체: 장축 전체 길이 ℓ, 단축 지름 ℓ/4. A=π(ℓ/8)², L=ℓ/4, Cd=24/Re+0.10.\n\n'
-            '정육면체는 면이 유동을 향하고 유선형체는 장축이 속도 방향을 따라간다고 가정합니다. '
-            '구는 Schiller–Naumann 근사, 나머지는 저속 점성항을 합친 교육용 근사입니다. '
-            '항력 위기 및 형상별 상세 유동은 재현하지 않습니다.\n\n'
-            'RK4 적분과 항력 시간척도에 따른 시간 간격을 사용하며 지면 도달 시 종료합니다. '
-            '손실은 공기에 전달된 에너지이며 충돌 손실은 포함하지 않습니다. '
-            '각 그래프 축의 축척은 다를 수 있습니다. 애니메이션은 전체 비행을 약 6초로 재생합니다.\n\n'
-            '허용 범위: 속력 0~100 m/s, 질량 0.0001~10000 kg, 크기 0.0001~10 m, '
-            '각도 -90~90°, 높이 0~10000 m. 극단적 조합은 계산 한도를 초과할 수 있습니다.')
+        dialog = tk.Toplevel(self.root)
+        dialog.title('모델과 가정')
+        dialog.transient(self.root)
+        dialog.resizable(False, False)
+        panel = ttk.Frame(dialog, padding=20)
+        panel.pack(fill='both', expand=True)
+        ttk.Label(panel, text='중력과 속도 반대 방향 항력만 고려합니다. 바람·양력·회전·부력은 제외합니다.',
+                  wraplength=700).pack(anchor='w', pady=(0, 14))
+        equations = tk.Canvas(panel, width=700, height=390, bg='white', highlightthickness=0)
+        equations.pack(fill='x')
+        normal = font.Font(dialog, family=self.font, size=12)
+        small = font.Font(dialog, family=self.font, size=9)
+        # Keep font objects alive for the lifetime of the dialog.
+        dialog.formula_fonts = (normal, small)
+
+        def formula(y, *terms):
+            x = 16
+            for term in terms:
+                if isinstance(term, str):
+                    equations.create_text(x, y, text=term, font=normal, anchor='w', fill=INK)
+                    x += normal.measure(term)
+                elif term[0] == 'fraction':
+                    numerator, denominator = term[1:]
+                    width = max(small.measure(numerator), small.measure(denominator)) + 10
+                    equations.create_text(x+width/2, y-11, text=numerator, font=small, fill=INK)
+                    equations.create_line(x+2, y, x+width-2, y, fill=INK)
+                    equations.create_text(x+width/2, y+12, text=denominator, font=small, fill=INK)
+                    x += width+3
+                elif term[0] in ('subscript', 'superscript'):
+                    base, subscript = term[1:]
+                    equations.create_text(x, y, text=base, font=normal, anchor='w', fill=INK)
+                    x += normal.measure(base)
+                    equations.create_text(x, y+(6 if term[0] == 'subscript' else -7), text=subscript, font=small, anchor='w', fill=INK)
+                    x += small.measure(subscript)+2
+
+        cd = ('subscript', 'C', 'd')
+        fraction = lambda a, b: ('fraction', a, b)
+        formula(30, ('subscript', 'F', 'd'), ' = ', fraction('1', '2'), 'ρ A ', cd,
+                ' v²     Re = ', fraction('ρvL', 'μ'))
+        formula(77, '구:  A = πr²,  L = 2r')
+        formula(124, 'Re < 1000:  ', cd, ' = ', fraction('24', 'Re'), '(1 + 0.15 ', ('superscript', 'Re', '0.687'), ')')
+        formula(171, 'Re ≥ 1000:  ', cd, ' = 0.44')
+        formula(218, '정육면체:  A = a²,  L = a,  ', cd, ' = ', fraction('24', 'Re'), ' + 1.05')
+        formula(265, '유선형체:  장축 전체 길이 ℓ,  단축 지름 ', fraction('ℓ', '4'))
+        formula(312, 'A = π (', fraction('ℓ', '8'), ')²,    L = ', fraction('ℓ', '4'))
+        formula(359, cd, ' = ', fraction('24', 'Re'), ' + 0.10')
+        ttk.Label(panel, text='허용 범위: 속력 0~100 m/s, 질량 0.0001~10000 kg, 크기 0.0001~10 m, '
+                  '각도 −90~90°, 높이 0~10000 m. 극단적 조합은 계산 한도를 초과할 수 있습니다.',
+                  wraplength=700).pack(anchor='w', pady=(14, 12))
+        ttk.Button(panel, text='닫기', command=dialog.destroy).pack(anchor='e')
+        dialog.bind('<Escape>', lambda event: dialog.destroy())
+        dialog.grab_set()
 
 
 if __name__ == '__main__':
