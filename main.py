@@ -52,7 +52,7 @@ class App:
         box.bind('<<ComboboxSelected>>', self.shape_changed)
         self.fields = {}
         for key, label, value in [('speed', '초기 속력 (m/s)', '25'), ('mass', '질량 (kg)', '0.2'),
-                                  ('size', '반지름 (m)', '0.05'), ('angle', '발사각 (°)', '45'),
+                                  ('size', '지름 (m)', '0.1'), ('angle', '발사각 (°)', '45'),
                                   ('height', '발사 높이 (m)', '1.5')]:
             lab = ttk.Label(left, text=label)
             lab.pack(anchor='w')
@@ -92,7 +92,7 @@ class App:
         root.after(150, self.run)
 
     def shape_changed(self, event=None):
-        self.size_label.configure(text={'구': '반지름 (m)', '정육면체': '한 변의 길이 (m)', '유선형체': '장축 전체 길이 (m)'}[self.shape.get()])
+        self.size_label.configure(text={'구': '지름 (m)', '정육면체': '한 변의 길이 (m)', '유선형체': '장축 전체 길이 (m)'}[self.shape.get()])
 
     def stop(self):
         self.playing = False
@@ -301,7 +301,7 @@ class App:
         fraction = lambda a, b: ('fraction', a, b)
         formula(30, ('subscript', 'F', 'd'), ' = ', fraction('1', '2'), 'ρ A ', cd,
                 ' v²     Re = ', fraction('ρvL', 'μ'))
-        formula(77, '구:  A = πr²,  L = 2r')
+        formula(77, '구:  지름 d,  A = π (', fraction('d', '2'), ')²,  L = d')
         formula(124, 'Re < 1000:  ', cd, ' = ', fraction('24', 'Re'), '(1 + 0.15 ', ('superscript', 'Re', '0.687'), ')')
         formula(171, 'Re ≥ 1000:  ', cd, ' = 0.44')
         formula(218, '정육면체:  A = a²,  L = a,  ', cd, ' = ', fraction('24', 'Re'), ' + 1.05')

@@ -10,7 +10,7 @@ G = 9.80665
 @dataclass(frozen=True)
 class Parameters:
     shape: str = 'sphere'
-    size: float = 0.05
+    size: float = 0.1
     mass: float = 0.2
     speed: float = 25
     angle: float = 45
@@ -29,7 +29,7 @@ class Parameters:
     @property
     def geometry(self):
         if self.shape == 'sphere':
-            return math.pi * self.size**2, 2 * self.size
+            return math.pi * (self.size / 2)**2, self.size
         if self.shape == 'cube':
             return self.size**2, self.size
         diameter = self.size / 4

@@ -44,6 +44,9 @@ class PhysicsTests(unittest.TestCase):
             self.assertTrue(math.isfinite(drag_factor(Parameters(shape=shape), 0)))
 
     def test_geometry(self):
+        area, length = Parameters(shape='sphere', size=0.1).geometry
+        self.assertAlmostEqual(area, math.pi * 0.05**2)
+        self.assertEqual(length, 0.1)
         self.assertEqual(Parameters(shape='cube', size=2).geometry, (4, 2))
         area, length = Parameters(shape='streamlined', size=4).geometry
         self.assertAlmostEqual(area, math.pi/4)
