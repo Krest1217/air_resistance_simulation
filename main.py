@@ -19,8 +19,12 @@ class App:
     def __init__(self, root):
         self.root = root
         root.title('공기저항 시뮬레이션 - air resistance simulation')
-        root.geometry('1180x820')
-        root.minsize(940, 720)
+        width = min(1180, max(640, root.winfo_screenwidth() - 80))
+        height = min(820, max(400, root.winfo_screenheight() - 100))
+        root.geometry(f'{width}x{height}')
+        root.minsize(min(900, width), min(480, height))
+        root.columnconfigure(0, weight=1)
+        root.rowconfigure(1, weight=1)
         root.configure(bg=BG)
         families = set(font.families(root))
         self.font = next((name for name in ('Malgun Gothic', 'Apple SD Gothic Neo',
@@ -39,10 +43,32 @@ class App:
         self.animation = None
         self.mailbox = queue.Queue()
         header = ttk.Frame(root, padding=(24, 18))
-        header.pack(fill='x')
+        header.grid(row=0, column=0, sticky='ew')
         ttk.Label(header, text='공기저항 시뮬레이션', style='Title.TLabel').pack(anchor='w')
-        body = ttk.Frame(root, padding=(24, 0, 24, 12))
-        body.pack(fill='both', expand=True)
+        viewport = ttk.Frame(root)
+        viewport.grid(row=1, column=0, sticky='nsew')
+        viewport.rowconfigure(0, weight=1)
+        viewport.columnconfigure(0, weight=1)
+        self.viewport = tk.Canvas(viewport, bg=BG, highlightthickness=0)
+        self.viewport.grid(row=0, column=0, sticky='nsew')
+        scrollbar = ttk.Scrollbar(viewport, orient='vertical', command=self.viewport.yview)
+        scrollbar.grid(row=0, column=1, sticky='ns')
+        self.viewport.configure(yscrollcommand=scrollbar.set)
+        body = ttk.Frame(self.viewport, padding=(24, 0, 24, 12))
+        self.body = body
+        body_window = self.viewport.create_window(0, 0, window=body, anchor='nw')
+
+        def fit_content(event=None):
+            self.viewport.itemconfigure(body_window, width=self.viewport.winfo_width(),
+                                        height=max(body.winfo_reqheight(), self.viewport.winfo_height()))
+            self.viewport.configure(scrollregion=self.viewport.bbox('all'))
+
+        body.bind('<Configure>', fit_content)
+        self.viewport.bind('<Configure>', fit_content)
+        root.bind('<MouseWheel>', lambda event: self.viewport.yview_scroll(
+            -1 if event.delta > 0 else 1, 'units'))
+        root.bind('<Button-4>', lambda event: self.viewport.yview_scroll(-1, 'units'))
+        root.bind('<Button-5>', lambda event: self.viewport.yview_scroll(1, 'units'))
         left = ttk.Frame(body, width=240)
         left.pack(side='left', fill='y', padx=(0, 20))
         ttk.Label(left, text='실험 조건', font=(self.font, 14, 'bold')).pack(anchor='w', pady=(0, 12))
@@ -70,6 +96,9 @@ class App:
         ttk.Button(left, text='모델과 가정 보기', command=self.about).pack(fill='x')
         right = ttk.Frame(body)
         right.pack(side='left', fill='both', expand=True)
+        right.bind('<Configure>', lambda event: (
+            self.summary.configure(wraplength=max(100, event.width)),
+            self.speed_label.configure(wraplength=max(100, event.width))))
         self.summary = ttk.Label(right, text='조건을 입력하고 실험을 시작하세요.', font=(self.font, 11, 'bold'), wraplength=780)
         self.summary.pack(anchor='w', pady=(0, 8))
         self.speed_label = ttk.Label(right, text='', wraplength=780, font=(self.font, 11, 'bold'))
@@ -90,7 +119,9 @@ class App:
         self.energy.pack(fill='x')
         self.energy.bind('<Configure>', lambda e: self.draw())
         self.status = ttk.Label(root, text='오프라인 실행 · 외부 패키지 불필요', padding=(24, 8), wraplength=1100)
-        self.status.pack(fill='x')
+        self.status.grid(row=2, column=0, sticky='ew')
+        root.bind('<Configure>', lambda event: self.status.configure(
+            wraplength=max(200, root.winfo_width()-48)) if event.widget == root else None)
         root.after(100, self.poll)
         root.after(150, self.run)
 

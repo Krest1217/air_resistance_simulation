@@ -71,6 +71,17 @@ class GuiTests(unittest.TestCase):
         with patch('main.messagebox.showerror') as dialog:
             app.run()
             dialog.assert_called_once()
+        for width, height in ((1180, 820), (1024, 720), (900, 480)):
+            root.geometry(f'{width}x{height}')
+            root.update()
+            self.assertGreaterEqual(app.status.winfo_height(), app.status.winfo_reqheight())
+            self.assertGreaterEqual(app.energy.winfo_height(), app.energy.winfo_reqheight())
+            self.assertLessEqual(app.status.winfo_rooty()+app.status.winfo_height(),
+                                 root.winfo_rooty()+root.winfo_height())
+            app.viewport.yview_moveto(1)
+            root.update()
+            self.assertLessEqual(app.energy.winfo_rooty()+app.energy.winfo_height(),
+                                 app.viewport.winfo_rooty()+app.viewport.winfo_height())
         self.assertEqual(errors, [])
 
 
