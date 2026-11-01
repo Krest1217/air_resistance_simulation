@@ -82,6 +82,12 @@ class GuiTests(unittest.TestCase):
             root.update()
             self.assertLessEqual(app.energy.winfo_rooty()+app.energy.winfo_height(),
                                  app.viewport.winfo_rooty()+app.viewport.winfo_height())
+        # Reserve a visible gap below the status text, also with large fonts.
+        app.status.configure(font=(app.font, 16))
+        root.update()
+        self.assertGreaterEqual(app.status.winfo_height(), app.status.winfo_reqheight())
+        self.assertGreaterEqual(root.winfo_rooty()+root.winfo_height()
+                                - app.status.winfo_rooty()-app.status.winfo_height(), 12)
         self.assertEqual(errors, [])
 
 

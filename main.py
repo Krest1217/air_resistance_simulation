@@ -32,6 +32,7 @@ class App:
                          font.nametofont('TkDefaultFont').actual('family'))
         for name in ('TkDefaultFont', 'TkTextFont', 'TkMenuFont'):
             font.nametofont(name).configure(family=self.font, size=10)
+        self.energy_scale = max(1.0, font.nametofont('TkDefaultFont').metrics('linespace') / 20)
         style = ttk.Style()
         style.theme_use('clam')
         style.configure('TFrame', background=BG)
@@ -115,11 +116,14 @@ class App:
         self.clock = ttk.Label(controls, text='0.00 s', width=18)
         self.clock.pack(side='left')
         ttk.Label(right, text='초기 역학적 에너지의 분배', font=(self.font, 13, 'bold')).pack(anchor='w', pady=(6, 4))
-        self.energy = tk.Canvas(right, background='white', highlightthickness=0, height=143)
+        self.energy = tk.Canvas(right, background='white', highlightthickness=0, height=math.ceil(143*self.energy_scale))
         self.energy.pack(fill='x')
         self.energy.bind('<Configure>', lambda e: self.draw())
-        self.status = ttk.Label(root, text='오프라인 실행 · 외부 패키지 불필요', padding=(24, 8), wraplength=1100)
-        self.status.grid(row=2, column=0, sticky='ew')
+        self.status = tk.Label(root, text='오프라인 실행 · 외부 패키지 불필요',
+                               bg=BG, fg=INK, font=(self.font, 10),
+                               anchor='w', justify='left', padx=24, pady=12,
+                               borderwidth=0, highlightthickness=0, wraplength=1100)
+        self.status.grid(row=2, column=0, sticky='ew', pady=(0, 12))
         root.bind('<Configure>', lambda event: self.status.configure(
             wraplength=max(200, root.winfo_width()-48)) if event.widget == root else None)
         root.after(100, self.poll)
@@ -235,26 +239,27 @@ class App:
         c = self.energy
         c.delete('all')
         w = c.winfo_width()
+        scale = self.energy_scale
         p = self.p
         initial = self.data[0].energy(p.mass)
         kinetic = p.mass*(q.vx*q.vx+q.vy*q.vy)/2
         potential = p.mass*G*q.y
         lost = max(0., initial-kinetic-potential)
-        c.create_text(16, 17, text=f'초기 에너지 {initial:.3f} J   →   현재 남은 에너지 {kinetic+potential:.3f} J', anchor='w', fill=INK)
+        c.create_text(16, 17*scale, text=f'초기 에너지 {initial:.3f} J   →   현재 남은 에너지 {kinetic+potential:.3f} J', anchor='w', fill=INK)
         x, width = 16, max(1, w-32)
         if initial > 0:
             for value, color in [(kinetic, BLUE), (potential, '#10b981'), (lost, ORANGE)]:
                 span = width*value/initial
-                c.create_rectangle(x, 38, x+span, 69, fill=color, outline='')
+                c.create_rectangle(x, 38*scale, x+span, 69*scale, fill=color, outline='')
                 x += span
         else:
-            c.create_rectangle(x, 38, x+width, 69, fill='#e5e7eb', outline='')
+            c.create_rectangle(x, 38*scale, x+width, 69*scale, fill='#e5e7eb', outline='')
         for i, (label, value, color) in enumerate([('운동', kinetic, BLUE), ('위치', potential, '#10b981'), ('공기저항 손실', lost, ORANGE)]):
             x = 16+i*(w-32)/3
             percent = 100*value/initial if initial else 0
-            c.create_text(x, 87, text=f'● {label}', fill=color, anchor='w')
-            c.create_text(x, 110, text=f'{value:.3f} J ({percent:.1f}%)', fill=INK, anchor='w')
-        c.create_text(16, 133, text='위치에너지 기준: 지면 y=0 · 손실 = 초기 역학적 에너지 − 현재 역학적 에너지', anchor='w', fill='#64748b', font=(self.font, 9))
+            c.create_text(x, 87*scale, text=f'● {label}', fill=color, anchor='w')
+            c.create_text(x, 110*scale, text=f'{value:.3f} J ({percent:.1f}%)', fill=INK, anchor='w')
+        c.create_text(16, 133*scale, text='위치에너지 기준: 지면 y=0 · 손실 = 초기 역학적 에너지 − 현재 역학적 에너지', anchor='w', fill='#64748b', font=(self.font, 9))
 
     def toggle(self):
         if not self.data:
