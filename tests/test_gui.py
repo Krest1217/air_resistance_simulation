@@ -30,13 +30,13 @@ class GuiTests(unittest.TestCase):
             self.fail('Simulation did not complete')
 
         wait_ready()
-        self.assertIn('도달하지 않음', app.terminal_label['text'])
-        self.assertIn('m/s', app.terminal_label['text'])
+        self.assertIn('도달하지 않음', app.speed_label['text'])
+        self.assertIn('m/s', app.speed_label['text'])
         self.assertGreater(len(app.chart.find_all()), 30)
         app.progress.set(0)
         app.draw()
         self.assertEqual(app.selected()[0].t, 0)
-        self.assertIn('현재 속력 25.000 m/s', app.velocity_label['text'])
+        self.assertIn('현재속도 : 25.000 m/s', app.speed_label['text'])
         app.toggle()
         root.update()
         self.assertTrue(app.playing)
@@ -52,8 +52,7 @@ class GuiTests(unittest.TestCase):
         app.draw()
         q = app.data[-1]
         import math
-        self.assertIn(f'현재 속력 {math.hypot(q.vx, q.vy):.3f} m/s', app.velocity_label['text'])
-        self.assertIn(f'수직 속도 {q.vy:+.3f} m/s', app.velocity_label['text'])
+        self.assertIn(f'현재속도 : {math.hypot(q.vx, q.vy):.3f} m/s', app.speed_label['text'])
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory)/'result.csv'
             with patch('main.filedialog.asksaveasfilename', return_value=str(path)):
@@ -67,7 +66,7 @@ class GuiTests(unittest.TestCase):
         app.fields['speed'].set('0')
         app.run()
         wait_ready()
-        self.assertIn('초에 도달', app.terminal_label['text'])
+        self.assertIn('초에 도달', app.speed_label['text'])
         app.fields['mass'].set('0')
         with patch('main.messagebox.showerror') as dialog:
             app.run()
