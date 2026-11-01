@@ -1,6 +1,7 @@
 """Offline desktop app: python main.py (Python 3.10+, Tk)."""
 import bisect
 import csv
+import math
 import queue
 import threading
 import tkinter as tk
@@ -73,6 +74,8 @@ class App:
         self.summary.pack(anchor='w', pady=(0, 8))
         self.terminal_label = ttk.Label(right, text='', wraplength=780)
         self.terminal_label.pack(anchor='w', pady=(0, 8))
+        self.velocity_label = ttk.Label(right, text='', wraplength=780, font=(self.font, 11, 'bold'))
+        self.velocity_label.pack(anchor='w', pady=(0, 8))
         self.chart = tk.Canvas(right, background='white', highlightthickness=0, height=340)
         self.chart.pack(fill='both', expand=True)
         self.chart.bind('<Configure>', lambda e: self.draw())
@@ -197,6 +200,7 @@ class App:
         x, y = xy(q)
         c.create_oval(x-6, y-6, x+6, y+6, fill=BLUE, outline='white', width=2)
         self.clock.configure(text=f'{q.t:.2f} / {self.data[-1].t:.2f} s')
+        self.velocity_label.configure(text=f'현재 속력 {math.hypot(q.vx, q.vy):.3f} m/s · 수평 속도 {q.vx:+.3f} m/s · 수직 속도 {q.vy:+.3f} m/s (위쪽 +)')
         self.draw_energy(q)
 
     def draw_energy(self, q):

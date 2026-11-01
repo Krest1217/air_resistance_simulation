@@ -36,6 +36,7 @@ class GuiTests(unittest.TestCase):
         app.progress.set(0)
         app.draw()
         self.assertEqual(app.selected()[0].t, 0)
+        self.assertIn('현재 속력 25.000 m/s', app.velocity_label['text'])
         app.toggle()
         root.update()
         self.assertTrue(app.playing)
@@ -49,6 +50,10 @@ class GuiTests(unittest.TestCase):
             self.assertEqual(app.data[-1].y, 0)
         app.progress.set(100)
         app.draw()
+        q = app.data[-1]
+        import math
+        self.assertIn(f'현재 속력 {math.hypot(q.vx, q.vy):.3f} m/s', app.velocity_label['text'])
+        self.assertIn(f'수직 속도 {q.vy:+.3f} m/s', app.velocity_label['text'])
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory)/'result.csv'
             with patch('main.filedialog.asksaveasfilename', return_value=str(path)):
