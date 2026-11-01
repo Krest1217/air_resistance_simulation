@@ -48,6 +48,37 @@ def drag_factor(p, speed):
     return 12 * MU * area / length + 0.5 * RHO * area * cd * speed
 
 
+def terminal_speed(p):
+    """Vertical downward equilibrium speed using the simulation's drag law."""
+    p.validate()
+    low, high = 0., 1.
+    weight = p.mass * G
+    while drag_factor(p, high) * high < weight:
+        high *= 2
+    for _ in range(80):
+        mid = (low + high) / 2
+        if drag_factor(p, mid) * mid < weight:
+            low = mid
+        else:
+            high = mid
+    return (low + high) / 2
+
+
+def terminal_reached_time(points, speed, tolerance=0.01):
+    """First airborne sample within 1% of vertical terminal velocity.
+
+    Both excess downward speed and horizontal motion must be small; crossing
+    the terminal speed while ascending or moving sideways is not arrival.
+    """
+    for i, point in enumerate(points):
+        airborne = point.y > 0 or (i > 0 and points[i-1].y > 0)
+        if (airborne and point.vy < 0
+                and abs(-point.vy - speed) <= tolerance * speed
+                and abs(point.vx) <= tolerance * speed):
+            return point.t
+    return None
+
+
 @dataclass(frozen=True)
 class Point:
     t: float

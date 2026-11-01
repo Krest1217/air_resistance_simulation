@@ -30,6 +30,8 @@ class GuiTests(unittest.TestCase):
             self.fail('Simulation did not complete')
 
         wait_ready()
+        self.assertIn('도달하지 않음', app.terminal_label['text'])
+        self.assertIn('m/s', app.terminal_label['text'])
         self.assertGreater(len(app.chart.find_all()), 30)
         app.progress.set(0)
         app.draw()
@@ -56,6 +58,11 @@ class GuiTests(unittest.TestCase):
             self.assertEqual(len(rows), len(app.data)+3)
             self.assertEqual(float(rows[-1][2]), 0)
             self.assertGreater(float(rows[-1][-1]), 0)
+        app.fields['height'].set('1000')
+        app.fields['speed'].set('0')
+        app.run()
+        wait_ready()
+        self.assertIn('초에 도달', app.terminal_label['text'])
         app.fields['mass'].set('0')
         with patch('main.messagebox.showerror') as dialog:
             app.run()

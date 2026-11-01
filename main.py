@@ -5,7 +5,7 @@ import queue
 import threading
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox, font
-from physics import Parameters, RHO, MU, G, simulate, vacuum, vacuum_time
+from physics import Parameters, RHO, MU, G, simulate, vacuum, vacuum_time, terminal_speed, terminal_reached_time
 
 BG = '#f4f6fa'
 INK = '#17263c'
@@ -71,6 +71,8 @@ class App:
         right.pack(side='left', fill='both', expand=True)
         self.summary = ttk.Label(right, text='조건을 입력하고 실험을 시작하세요.', font=(self.font, 11, 'bold'), wraplength=780)
         self.summary.pack(anchor='w', pady=(0, 8))
+        self.terminal_label = ttk.Label(right, text='', wraplength=780)
+        self.terminal_label.pack(anchor='w', pady=(0, 8))
         self.chart = tk.Canvas(right, background='white', highlightthickness=0, height=340)
         self.chart.pack(fill='both', expand=True)
         self.chart.bind('<Configure>', lambda e: self.draw())
@@ -142,6 +144,10 @@ class App:
                 self.vacuum_data = [vacuum(p, vt*i/200) for i in range(201)]
                 apex = max(q.y for q in data)
                 self.summary.configure(text=f'궤적 비교   |   비행시간 {end.t:.2f} s   ·   사거리 {end.x:.2f} m   ·   최고 높이 {apex:.2f} m\n공기저항 없음: 비행시간 {vt:.2f} s · 사거리 {self.vacuum_data[-1].x:.2f} m')
+                terminal = terminal_speed(p)
+                reached = terminal_reached_time(data, terminal)
+                arrival = f'{reached:.2f}초에 도달' if reached is not None else '도달하지 않음'
+                self.terminal_label.configure(text=f'종단속도 {terminal:.3f} m/s · {arrival}\n판정 기준: 하강 속력이 종단속도의 ±1% 이내, 수평 속력이 종단속도의 1% 이하')
                 self.progress.set(100)
                 self.play_button.configure(state='normal')
                 self.export_button.configure(state='normal')

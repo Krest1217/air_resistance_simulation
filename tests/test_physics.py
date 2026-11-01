@@ -1,6 +1,6 @@
 import math
 import unittest
-from physics import Parameters, simulate, vacuum, vacuum_time, drag_factor
+from physics import Parameters, simulate, vacuum, vacuum_time, drag_factor, terminal_speed, terminal_reached_time, Point
 
 
 class PhysicsTests(unittest.TestCase):
@@ -51,6 +51,30 @@ class PhysicsTests(unittest.TestCase):
         area, length = Parameters(shape='streamlined', size=4).geometry
         self.assertAlmostEqual(area, math.pi/4)
         self.assertEqual(length, 1)
+
+    def test_terminal_force_balance(self):
+        from physics import G
+        for shape in ('sphere', 'cube', 'streamlined'):
+            for mass, size in ((0.2, 0.1), (0.0001, 0.01)):
+                p = Parameters(shape=shape, mass=mass, size=size)
+                v = terminal_speed(p)
+                self.assertGreater(v, 0)
+                self.assertAlmostEqual(drag_factor(p, v)*v, p.mass*G, places=9)
+
+    def test_terminal_reached_and_not_reached(self):
+        p = Parameters(speed=0, height=1000)
+        points = simulate(p)
+        v = terminal_speed(p)
+        reached = terminal_reached_time(points, v)
+        self.assertIsNotNone(reached)
+        self.assertGreater(reached, 0)
+        self.assertLess(reached, points[-1].t)
+        self.assertIsNone(terminal_reached_time(simulate(Parameters()), v))
+        self.assertIsNone(terminal_reached_time([Point(0, 0, 0, 0, -v)], v))
+        self.assertIsNone(terminal_reached_time([Point(0, 0, 10, 0, v)], v))
+        self.assertIsNone(terminal_reached_time([Point(0, 0, 10, v, -v)], v))
+        self.assertIsNone(terminal_reached_time([Point(0, 0, 10, 0, -2*v)], v))
+        self.assertEqual(terminal_reached_time([Point(0, 0, 10, 0, -v)], v), 0)
 
     def test_invalid_inputs(self):
         for kw in ({'mass': 0}, {'size': -1}, {'speed': float('nan')},
